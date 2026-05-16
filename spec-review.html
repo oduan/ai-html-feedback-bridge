@@ -1,0 +1,1370 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI HTML Feedback Bridge - SPEC Review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f4;
+      --surface: #ffffff;
+      --surface-2: #f0f4f1;
+      --ink: #16201d;
+      --muted: #5f6c67;
+      --line: #d8dfda;
+      --line-strong: #b9c5bf;
+      --green: #11735d;
+      --blue: #295f9d;
+      --amber: #9b6a11;
+      --red: #a33a35;
+      --violet: #684e9f;
+      --code-bg: #111917;
+      --code-ink: #dce9e4;
+      --shadow: 0 18px 50px rgba(22, 32, 29, 0.08);
+      --radius: 8px;
+      --nav-width: 248px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    code,
+    pre {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: var(--nav-width) minmax(0, 1fr);
+    }
+
+    .side {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 18px 16px;
+      border-right: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(12px);
+      overflow-y: auto;
+    }
+
+    .brand {
+      display: grid;
+      gap: 8px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand strong {
+      font-size: 18px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .nav {
+      display: grid;
+      gap: 4px;
+      margin-top: 16px;
+    }
+
+    .nav a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 32px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .nav a:hover {
+      background: var(--surface-2);
+      color: var(--ink);
+      transform: translateX(2px);
+    }
+
+    .nav a::after {
+      content: attr(data-tag);
+      color: #7b8983;
+      font-size: 11px;
+    }
+
+    .meta-box {
+      margin-top: 18px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .meta-box b {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 54px;
+      padding: 0 28px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(246, 247, 244, 0.86);
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar .path {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .topbar .path code {
+      padding: 2px 6px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--surface);
+      color: var(--ink);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      min-height: 32px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--ink);
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+      transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+    }
+
+    button:hover {
+      background: var(--surface-2);
+      border-color: #8fa099;
+      transform: translateY(-1px);
+    }
+
+    main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 26px 28px 64px;
+    }
+
+    section {
+      scroll-margin-top: 72px;
+      margin-top: 28px;
+    }
+
+    .hero {
+      margin-top: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(330px, 0.8fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .hero-copy {
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 780px;
+      font-size: 30px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 860px;
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .verdict {
+      display: grid;
+      gap: 8px;
+      padding: 20px;
+      border: 1px solid #a8bcb4;
+      border-radius: var(--radius);
+      background: #e9f3ee;
+    }
+
+    .verdict h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .verdict .score {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .score span {
+      padding: 8px;
+      border: 1px solid rgba(17, 115, 93, 0.2);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .score b {
+      display: block;
+      color: var(--green);
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line-strong);
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.2;
+    }
+
+    .section-title p {
+      max-width: 720px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 38px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--line);
+      background: #fafbf8;
+      font-weight: 700;
+    }
+
+    .panel-body {
+      padding: 10px;
+    }
+
+    .metric {
+      display: grid;
+      gap: 6px;
+      min-height: 98px;
+      padding: 12px;
+      border-left: 4px solid var(--green);
+    }
+
+    .metric:nth-child(2) {
+      border-left-color: var(--blue);
+    }
+
+    .metric:nth-child(3) {
+      border-left-color: var(--amber);
+    }
+
+    .metric:nth-child(4) {
+      border-left-color: var(--violet);
+    }
+
+    .metric b {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .flow-step {
+      position: relative;
+      min-height: 88px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .flow-step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      right: -9px;
+      top: 50%;
+      width: 9px;
+      height: 1px;
+      background: var(--line-strong);
+    }
+
+    .flow-step b {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--green);
+      font-size: 12px;
+    }
+
+    .flow-step span {
+      font-size: 13px;
+    }
+
+    .list {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .list li {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 6px;
+      align-items: start;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .list li::before {
+      content: "•";
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .list.no li::before {
+      content: "×";
+      color: var(--red);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 7px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .tag.green {
+      border-color: rgba(17, 115, 93, 0.25);
+      background: rgba(17, 115, 93, 0.08);
+      color: var(--green);
+    }
+
+    .tag.blue {
+      border-color: rgba(41, 95, 157, 0.25);
+      background: rgba(41, 95, 157, 0.08);
+      color: var(--blue);
+    }
+
+    .tag.amber {
+      border-color: rgba(155, 106, 17, 0.25);
+      background: rgba(155, 106, 17, 0.08);
+      color: var(--amber);
+    }
+
+    .tag.red {
+      border-color: rgba(163, 58, 53, 0.25);
+      background: rgba(163, 58, 53, 0.08);
+      color: var(--red);
+    }
+
+    .table-wrap {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f5f7f4;
+      color: #33413d;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    td code,
+    .inline-code {
+      padding: 1px 5px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #f8faf8;
+      color: #20302b;
+      font-size: 12px;
+    }
+
+    pre {
+      margin: 0;
+      padding: 12px;
+      border-radius: 0 0 var(--radius) var(--radius);
+      overflow-x: auto;
+      background: var(--code-bg);
+      color: var(--code-ink);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .endpoint {
+      display: grid;
+      gap: 9px;
+    }
+
+    .method {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      min-height: 24px;
+      padding: 2px 8px;
+      border-radius: 5px;
+      color: white;
+      font-weight: 800;
+      font-size: 12px;
+    }
+
+    .method.post {
+      background: var(--green);
+    }
+
+    .method.get {
+      background: var(--blue);
+    }
+
+    .endpoint code {
+      display: block;
+      padding: 7px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #f8faf8;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow-x: auto;
+    }
+
+    .architecture {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .arch-node {
+      min-height: 104px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .arch-node b {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .arch-node small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .risk-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .risk-item {
+      display: grid;
+      grid-template-columns: 86px minmax(0, 1fr);
+      gap: 10px;
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .risk-item:last-child {
+      border-bottom: 0;
+    }
+
+    .priority {
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .priority.high {
+      color: var(--red);
+    }
+
+    .priority.medium {
+      color: var(--amber);
+    }
+
+    .priority.low {
+      color: var(--green);
+    }
+
+    .roadmap {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .phase {
+      border-top: 4px solid var(--green);
+    }
+
+    .phase:nth-child(2) {
+      border-top-color: var(--amber);
+    }
+
+    .phase:nth-child(3) {
+      border-top-color: var(--blue);
+    }
+
+    .checklist {
+      columns: 2;
+      column-gap: 18px;
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .checklist li {
+      break-inside: avoid;
+      margin-bottom: 7px;
+      padding-left: 24px;
+      position: relative;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .checklist li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 3px;
+      width: 14px;
+      height: 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 3px;
+      background: var(--surface);
+    }
+
+    .print-note {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .fade-in {
+      opacity: 0;
+      transform: translateY(8px);
+      animation: rise 420ms ease forwards;
+    }
+
+    .fade-in:nth-child(2) {
+      animation-delay: 80ms;
+    }
+
+    .fade-in:nth-child(3) {
+      animation-delay: 140ms;
+    }
+
+    @keyframes rise {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 1120px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+
+      .side {
+        position: relative;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .hero,
+      .grid-4,
+      .grid-3,
+      .grid-2,
+      .risk-grid,
+      .roadmap {
+        grid-template-columns: 1fr;
+      }
+
+      .flow,
+      .architecture {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar {
+        position: relative;
+        padding: 12px 16px;
+        align-items: start;
+        flex-direction: column;
+      }
+
+      main {
+        padding: 18px 16px 44px;
+      }
+
+      .nav {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-copy {
+        padding: 18px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .section-title {
+        display: grid;
+      }
+
+      .section-title p {
+        text-align: left;
+      }
+
+      .flow,
+      .architecture {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-step::after {
+        display: none;
+      }
+
+      .checklist {
+        columns: 1;
+      }
+    }
+
+    @media print {
+      .side,
+      .topbar,
+      .actions {
+        display: none;
+      }
+
+      .page {
+        display: block;
+      }
+
+      main {
+        max-width: none;
+        padding: 0;
+      }
+
+      section {
+        break-inside: avoid;
+      }
+
+      body {
+        background: white;
+      }
+
+      .panel,
+      .hero-copy,
+      .verdict,
+      .table-wrap,
+      .flow-step,
+      .arch-node {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="side">
+      <div class="brand">
+        <strong>SPEC Review</strong>
+        <span>AI HTML Feedback Bridge / v0.1 后端规格审阅</span>
+      </div>
+      <nav class="nav" aria-label="页面导航">
+        <a href="#overview" data-tag="01">总览</a>
+        <a href="#scope" data-tag="02">范围</a>
+        <a href="#architecture" data-tag="03">架构</a>
+        <a href="#data" data-tag="04">数据</a>
+        <a href="#api" data-tag="05">接口</a>
+        <a href="#config" data-tag="06">配置</a>
+        <a href="#security" data-tag="07">安全</a>
+        <a href="#review" data-tag="08">审阅</a>
+        <a href="#roadmap" data-tag="09">路线</a>
+        <a href="#build" data-tag="10">开发</a>
+      </nav>
+      <div class="meta-box">
+        <b>规格文件</b>
+        <div>来源：<code>SPEC.md</code></div>
+        <div>页面目标：高密度审阅，而非宣传展示。</div>
+      </div>
+    </aside>
+
+    <div class="content">
+      <header class="topbar">
+        <div class="path">
+          <span>当前审阅对象</span>
+          <code>backend v0.1</code>
+          <code>Go</code>
+          <code>SQLite</code>
+          <code>Docker Compose</code>
+        </div>
+        <div class="actions">
+          <button type="button" onclick="window.print()">打印 / 导出 PDF</button>
+          <button type="button" onclick="document.body.classList.toggle('compact')">切换密度</button>
+        </div>
+      </header>
+
+      <main>
+        <section id="overview" class="hero fade-in">
+          <div class="hero-copy">
+            <p class="eyebrow">MVP 闭环</p>
+            <h1>保存 AI HTML 页面里的用户补充信息，并让下一轮 AI 按 interaction_id 读取。</h1>
+            <p class="lead">当前 SPEC 的方向清晰：后端不保存 HTML、不理解页面结构、不定义业务字段，只负责原始补充内容的存取和大小限制。它适合作为 v0.1 的开发依据。</p>
+            <div class="flow" aria-label="核心流程">
+              <div class="flow-step"><b>01</b><span>AI 生成 HTML 页面</span></div>
+              <div class="flow-step"><b>02</b><span>用户补充信息</span></div>
+              <div class="flow-step"><b>03</b><span>页面提交到后端</span></div>
+              <div class="flow-step"><b>04</b><span>按 interaction_id 保存</span></div>
+              <div class="flow-step"><b>05</b><span>下一轮 AI 读取</span></div>
+              <div class="flow-step"><b>06</b><span>AI 继续处理任务</span></div>
+            </div>
+          </div>
+          <div class="verdict">
+            <h2>审阅结论</h2>
+            <p>整体合理，适合先做极简后端。CORS、请求体读取限制、保存状态码、时间格式和 Skill 初始目录范围已经确认。</p>
+            <div class="score">
+              <span><b>2</b>核心接口</span>
+              <span><b>1</b>数据表</span>
+              <span><b>1MB</b>默认限制</span>
+            </div>
+            <div>
+              <span class="tag green">边界明确</span>
+              <span class="tag blue">可拆分开发</span>
+              <span class="tag amber">需补工程细节</span>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="grid-4 fade-in">
+            <div class="panel metric">
+              <b>v0.1</b>
+              <span>目标是跑通最小闭环，不进入用户系统、历史记录、后台 UI。</span>
+            </div>
+            <div class="panel metric">
+              <b>POST</b>
+              <span>保存任意文本内容，记录 Content-Type，重复 interaction_id 覆盖。</span>
+            </div>
+            <div class="panel metric">
+              <b>GET</b>
+              <span>按 interaction_id 返回原始内容，并恢复保存时的 Content-Type。</span>
+            </div>
+            <div class="panel metric">
+              <b>AI 分工</b>
+              <span>HTTP、SQLite、测试、Docker、Skill 可以自然拆开并行实现。</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="scope">
+          <div class="section-title">
+            <h2>范围边界</h2>
+            <p>v0.1 只做用户补充内容的存取。所有和 HTML 生成、业务理解、版本管理有关的能力都留到后续。</p>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-head">后端要做</div>
+              <div class="panel-body">
+                <ul class="list">
+                  <li>接收用户补充内容</li>
+                  <li>按 <code>interaction_id</code> 保存内容</li>
+                  <li>根据 <code>interaction_id</code> 返回内容</li>
+                  <li>限制单次提交大小</li>
+                  <li>保存并恢复 <code>Content-Type</code></li>
+                </ul>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">后端不做</div>
+              <div class="panel-body">
+                <ul class="list no">
+                  <li>不生成或保存 AI HTML 页面</li>
+                  <li>不解析 HTML、业务字段或内容语义</li>
+                  <li>不规定表单结构和提交格式</li>
+                  <li>不做 diff、版本管理、历史记录</li>
+                  <li>不做用户系统、管理后台、权限体系</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="architecture">
+          <div class="section-title">
+            <h2>后端架构</h2>
+            <p>当前拆分适合 Go 项目和 AI 协作：入口、配置、HTTP、存储、迁移各自独立。</p>
+          </div>
+          <div class="architecture">
+            <div class="arch-node"><b>cmd/server</b><small>加载配置，初始化依赖，启动 HTTP 服务。</small></div>
+            <div class="arch-node"><b>internal/config</b><small>集中读取环境变量，提供默认值和校验。</small></div>
+            <div class="arch-node"><b>internal/httpapi</b><small>路由、handler、请求读取、ID 校验、错误响应。</small></div>
+            <div class="arch-node"><b>internal/storage</b><small>SQLite 连接、迁移、upsert 和查询实现。</small></div>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-head">建议目录</div>
+              <pre>backend/
+  cmd/server/main.go
+  internal/config/config.go
+  internal/httpapi/router.go
+  internal/httpapi/handlers.go
+  internal/httpapi/errors.go
+  internal/storage/sqlite.go
+  internal/storage/interactions.go
+  internal/storage/migrations.go
+  migrations/001_create_interactions.sql
+skills/html-feedback-bridge/SKILL.md
+examples/requests/
+examples/html/
+Dockerfile
+docker-compose.yml</pre>
+            </div>
+            <div class="panel">
+              <div class="panel-head">分工切片</div>
+              <div class="panel-body">
+                <ul class="list">
+                  <li>HTTP 接口：路由、状态码、请求体限制、响应格式</li>
+                  <li>SQLite 存储：建表、upsert、查询、连接配置</li>
+                  <li>HTTP handlers：interaction_id 校验、Content-Type 默认值</li>
+                  <li>测试：handler、storage、端到端请求</li>
+                  <li>交付：Dockerfile、Compose、README、示例 HTML</li>
+                  <li>v0.1 不单独拆 <code>internal/submission</code>；后续复杂化再拆领域包</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="data">
+          <div class="section-title">
+            <h2>数据模型</h2>
+            <p>单表 <code>interactions</code> 足够支撑 v0.1。关键点是覆盖保存、原文保存、Content-Type 保真。</p>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>字段</th>
+                  <th>类型</th>
+                  <th>约束</th>
+                  <th>语义</th>
+                  <th>审阅备注</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>interaction_id</code></td>
+                  <td>TEXT</td>
+                  <td>PRIMARY KEY</td>
+                  <td>一次 AI HTML 收集用户补充信息的交互实例标识</td>
+                  <td>不是整段对话或登录会话；建议限制长度 1-128，并限制字符集。</td>
+                </tr>
+                <tr>
+                  <td><code>content_type</code></td>
+                  <td>TEXT</td>
+                  <td>NOT NULL</td>
+                  <td>提交时的 Content-Type</td>
+                  <td>缺省值建议为 <code>text/plain; charset=utf-8</code>。</td>
+                </tr>
+                <tr>
+                  <td><code>content</code></td>
+                  <td>TEXT</td>
+                  <td>NOT NULL</td>
+                  <td>用户补充给 AI 的原始内容</td>
+                  <td>v0.1 接受文本即可；二进制不在范围内。</td>
+                </tr>
+                <tr>
+                  <td><code>created_at</code></td>
+                  <td>DATETIME</td>
+                  <td>NOT NULL</td>
+                  <td>首次保存时间，UTC 时间格式</td>
+                  <td>使用 UTC / RFC3339，例如 <code>2026-05-16T09:30:00Z</code>。</td>
+                </tr>
+                <tr>
+                  <td><code>updated_at</code></td>
+                  <td>DATETIME</td>
+                  <td>NOT NULL</td>
+                  <td>最近覆盖时间，UTC 时间格式</td>
+                  <td>重复提交时更新，不依赖服务器本地时区。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-head">命名决策</div>
+              <div class="panel-body">
+                <ul class="list">
+                  <li><code>interaction_id</code> 表示一次具体的 HTML 交互实例。</li>
+                  <li>它不表示整段对话、用户登录会话或筛选流程。</li>
+                  <li>同一个任务或多轮对话中，可以有多个 <code>interaction_id</code>。</li>
+                  <li>后续需要归组时，再增加 <code>task_id</code>、<code>conversation_id</code> 或 <code>turn_id</code>。</li>
+                </ul>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">示例</div>
+              <pre>demo-001
+task-2026-001.r1.html1
+task-2026-001.r3.timeline
+review.ab12cd</pre>
+            </div>
+          </div>
+        </section>
+
+        <section id="api">
+          <div class="section-title">
+            <h2>HTTP 接口</h2>
+            <p>接口契约简单清楚。实现时要保证读取限制、覆盖行为和 Content-Type 返回一致。</p>
+          </div>
+          <div class="grid-2">
+            <div class="panel endpoint">
+              <div class="panel-head"><span><span class="method post">POST</span> 提交用户补充内容</span></div>
+              <div class="panel-body endpoint">
+                <code>/interactions/{interaction_id}</code>
+                <ul class="list">
+                  <li>请求体为任意文本内容</li>
+                  <li>以流式限制方式检查 <code>MAX_CONTENT_SIZE</code></li>
+                  <li>保存原始请求体和 <code>Content-Type</code></li>
+                  <li>同一 <code>interaction_id</code> 已存在时覆盖</li>
+                  <li>返回 <code>{"ok": true, "interaction_id": "demo-001"}</code></li>
+                </ul>
+              </div>
+            </div>
+            <div class="panel endpoint">
+              <div class="panel-head"><span><span class="method get">GET</span> 获取用户补充内容</span></div>
+              <div class="panel-body endpoint">
+                <code>/interactions/{interaction_id}</code>
+                <ul class="list">
+                  <li>查询指定 <code>interaction_id</code></li>
+                  <li>存在时返回保存的原始内容</li>
+                  <li>响应头使用保存时的 <code>Content-Type</code></li>
+                  <li>不存在时返回 <code>404</code></li>
+                  <li>错误体为 <code>{"ok": false, "error": "interaction not found"}</code></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:10px;">
+            <div class="panel-head">接口命名决策</div>
+            <div class="panel-body">
+              <ul class="list">
+                <li>不再使用 <code>/interactions/{interaction_id}/submission</code>，因为 <code>interaction_id</code> 已经定位到一次反馈交互。</li>
+                <li>主接口使用 <code>POST</code>，和 HTML 页面提交表单或脚本提交内容的语义保持一致。</li>
+                <li>同一个 <code>interaction_id</code> 重复 <code>POST</code> 时，后端执行覆盖保存。</li>
+              </ul>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>状态码</th>
+                  <th>场景</th>
+                  <th>建议</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>200 OK</code></td><td>读取成功；提交保存成功</td><td>保存接口统一返回 200，不区分首次保存和覆盖保存。</td></tr>
+                <tr><td><code>400 Bad Request</code></td><td><code>interaction_id</code> 为空或非法</td><td>实现前需要固定校验规则。</td></tr>
+                <tr><td><code>404 Not Found</code></td><td>interaction 不存在</td><td>错误响应使用 JSON。</td></tr>
+                <tr><td><code>413 Payload Too Large</code></td><td>请求体超过限制</td><td>必须实现，属于核心边界。</td></tr>
+                <tr><td><code>500 Internal Server Error</code></td><td>服务端内部错误</td><td>不要泄露数据库路径或堆栈。</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="config">
+          <div class="section-title">
+            <h2>配置与部署</h2>
+            <p>环境变量足够支撑第一版。Compose 需要挂载 SQLite 数据目录，避免容器重建后数据丢失。</p>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-head">配置项</div>
+              <div class="table-wrap" style="margin-top:0;border:0;border-radius:0;">
+                <table>
+                  <thead><tr><th>变量</th><th>默认值</th><th>说明</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>PORT</code></td><td><code>8080</code></td><td>HTTP 服务端口</td></tr>
+                    <tr><td><code>SQLITE_PATH</code></td><td><code>./data/app.db</code></td><td>SQLite 数据库文件路径</td></tr>
+                    <tr><td><code>MAX_CONTENT_SIZE</code></td><td><code>1048576</code></td><td>单次提交最大字节数，默认 1MB</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">Compose 形态</div>
+              <pre>services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      SQLITE_PATH: "/data/app.db"
+      MAX_CONTENT_SIZE: "1048576"
+    volumes:
+      - ./data:/data</pre>
+            </div>
+          </div>
+        </section>
+
+        <section id="security">
+          <div class="section-title">
+            <h2>安全与边界</h2>
+            <p>v0.1 默认适合本地、内网、Demo 或受控环境。公开部署前至少补 token 或其他访问控制。</p>
+          </div>
+          <div class="grid-3">
+            <div class="panel">
+              <div class="panel-head">必须保留</div>
+              <div class="panel-body">
+                <ul class="list">
+                  <li>以流式读取方式限制请求体大小</li>
+                  <li>参数化 SQL</li>
+                  <li>不执行用户提交内容</li>
+                  <li>错误信息不泄露内部路径</li>
+                </ul>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">已确认规则</div>
+              <div class="panel-body">
+                <ul class="list">
+                  <li>CORS 允许任意来源：<code>Access-Control-Allow-Origin: *</code></li>
+                  <li>支持 <code>GET</code>、<code>POST</code> 和 <code>OPTIONS</code></li>
+                  <li>请求体限制在流式读取时执行</li>
+                  <li>保存成功统一返回 <code>200 OK</code></li>
+                  <li>时间字段使用 UTC / RFC3339</li>
+                </ul>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">后续增强</div>
+              <div class="panel-body">
+                <ul class="list">
+                  <li>简单 token</li>
+                  <li>健康检查：<code>GET /healthz</code></li>
+                  <li>SQLite WAL 和 busy timeout</li>
+                  <li>统一请求日志和错误日志</li>
+                  <li>历史记录</li>
+                  <li>Web UI 查看提交</li>
+                  <li>必要时迁移 PostgreSQL</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="review">
+          <div class="section-title">
+            <h2>审阅重点</h2>
+            <p>这里记录已经确认的实现规则和仍然可以后续增强的工程项。</p>
+          </div>
+          <div class="risk-grid">
+            <div class="panel">
+              <div class="panel-head">已确认项</div>
+              <div class="risk-item">
+                <div class="priority high">已确认</div>
+                <div><b>CORS 允许任意来源</b><br>v0.1 返回 <code>Access-Control-Allow-Origin: *</code>，支持 <code>GET</code>、<code>POST</code> 和 <code>OPTIONS</code>，不启用 credential 模式。</div>
+              </div>
+              <div class="risk-item">
+                <div class="priority high">已确认</div>
+                <div><b>请求体限制在流式读取时进行</b><br>实现时使用限制 reader，不允许完整读入内存后再判断，超过 <code>MAX_CONTENT_SIZE</code> 返回 <code>413</code>。</div>
+              </div>
+              <div class="risk-item">
+                <div class="priority medium">已确认</div>
+                <div><b>保存状态统一返回 200</b><br>首次保存和覆盖保存都返回 <code>200 OK</code>，不再区分两类保存状态。</div>
+              </div>
+              <div class="risk-item">
+                <div class="priority medium">已确认</div>
+                <div><b>时间字段使用 UTC 格式</b><br><code>created_at</code> 和 <code>updated_at</code> 使用 UTC / RFC3339，不依赖服务器本地时区。</div>
+              </div>
+              <div class="risk-item">
+                <div class="priority low">已确认</div>
+                <div><b>Skill 初始目录只放方向说明</b><br>第一版不放具体 HTML 模板、表单结构或提交脚本，后续真实使用后再完善。</div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">合理性判断</div>
+              <div class="panel-body">
+                <ul class="list">
+                  <li>边界足够窄：只保存用户补充内容，避免过早做平台化。</li>
+                  <li>数据模型足够小：单表覆盖保存符合第一版目标。</li>
+                  <li>接口数量合适：两个接口正好对应保存和读取。</li>
+                  <li>Go + SQLite 匹配开源 Demo 和本地部署体验。</li>
+                  <li>目录拆分利于 AI 协作，不会把实现都堆在 main.go。</li>
+                  <li>CORS、状态码、时间格式和请求体限制已经明确，剩余工程项主要是 healthz、日志、SQLite 参数。</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="roadmap">
+          <div class="section-title">
+            <h2>Roadmap</h2>
+            <p>路线安排合理。v0.1 不应加入历史记录、后台 UI、token 之外的复杂能力。</p>
+          </div>
+          <div class="roadmap">
+            <div class="panel phase">
+              <div class="panel-head">v0.1 最小闭环</div>
+              <div class="panel-body">
+                <ul class="list">
+                  <li>Go 后端</li>
+                  <li>SQLite</li>
+                  <li>Docker / Docker Compose</li>
+                  <li>保存和获取接口</li>
+                  <li>内容大小限制</li>
+                  <li>README 与 Skill 初始目录</li>
+                </ul>
+              </div>
+            </div>
+            <div class="panel phase">
+              <div class="panel-head">v0.2 可选增强</div>
+              <div class="panel-body">
+                <ul class="list">
+                  <li>更完整的 Skill</li>
+                  <li>示例 HTML</li>
+                  <li>示例请求</li>
+                  <li>简单 token</li>
+                  <li>历史记录</li>
+                </ul>
+              </div>
+            </div>
+            <div class="panel phase">
+              <div class="panel-head">v0.3 可选增强</div>
+              <div class="panel-body">
+                <ul class="list">
+                  <li>Web UI 查看提交内容</li>
+                  <li>更多示例场景</li>
+                  <li>稳定的前端提交脚本</li>
+                  <li>按使用情况评估 PostgreSQL</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="build">
+          <div class="section-title">
+            <h2>开发优先级与验收</h2>
+            <p>下面这组任务可以直接作为后续开发拆分依据。验收标准保持三句话：能保存、能读取、能拒绝过大内容。</p>
+          </div>
+          <div class="grid-2">
+            <div class="panel">
+              <div class="panel-head">开发顺序</div>
+              <div class="panel-body">
+                <ol>
+                  <li>建立 Go 项目骨架和配置读取</li>
+                  <li>建立 SQLite 连接和表迁移</li>
+                  <li>实现 SQLite storage 的保存和读取方法</li>
+                  <li>实现两个 HTTP handlers</li>
+                  <li>增加大小限制和错误响应</li>
+                  <li>补充单元测试和接口测试</li>
+                  <li>增加 Dockerfile 和 docker-compose</li>
+                  <li>添加 Skill 初始目录</li>
+                  <li>增加示例请求和示例 HTML</li>
+                </ol>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">测试清单</div>
+              <div class="panel-body">
+                <ul class="checklist">
+                  <li>保存 JSON 内容后能原样读取</li>
+                  <li>保存纯文本内容后能原样读取</li>
+                  <li>同一个 interaction_id 重复提交会覆盖旧内容</li>
+                  <li>读取不存在的 interaction_id 返回 404</li>
+                  <li>超过 MAX_CONTENT_SIZE 返回 413</li>
+                  <li>保存和读取时 Content-Type 保持一致</li>
+                  <li>非法 interaction_id 返回 400</li>
+                  <li>SQLite 初始化时自动创建表</li>
+                  <li>CORS 返回任意来源允许头</li>
+                  <li>保存成功统一返回 200 OK</li>
+                  <li>时间字段使用 UTC / RFC3339</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:10px;">
+            <div class="panel-head">v0.1 完成标准</div>
+            <pre>可以通过 POST 保存某个 interaction_id 的用户补充内容，
+可以通过 GET 原样读取该内容，
+并且超过大小限制时会被拒绝。</pre>
+          </div>
+          <p class="print-note">单文件审阅页：所有样式和脚本均内联，可直接用浏览器打开。</p>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const style = document.createElement("style");
+    style.textContent = `
+      body.compact main { max-width: 1600px; }
+      body.compact section { margin-top: 18px; }
+      body.compact .panel-body { padding: 8px; }
+      body.compact th, body.compact td { padding: 7px 8px; }
+      body.compact .hero-copy { padding: 18px; }
+      body.compact .flow-step { min-height: 72px; }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>
