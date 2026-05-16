@@ -1,0 +1,13 @@
+# Build artifacts
+backend/server
+backend/server.exe
+
+# Test data
+data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
