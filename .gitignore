@@ -1,0 +1,43 @@
+# Local evaluation artifacts
+.eval/
+
+# Go build and test artifacts
+backend/server
+backend/server.exe
+backend/*.exe
+backend/*.test
+backend/coverage.out
+backend/coverage.html
+backend/bin/
+backend/dist/
+
+# SQLite runtime data
+data/
+backend/data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Environment and local config
+.env
+.env.*
+!.env.example
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor and IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
