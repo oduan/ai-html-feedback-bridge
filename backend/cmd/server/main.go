@@ -4,9 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/oisin/ai-html-feedback-bridge/internal/config"
-	"github.com/oisin/ai-html-feedback-bridge/internal/httpapi"
-	"github.com/oisin/ai-html-feedback-bridge/internal/storage"
+	"github.com/oduan/ai-html-feedback-bridge/internal/config"
+	"github.com/oduan/ai-html-feedback-bridge/internal/httpapi"
+	"github.com/oduan/ai-html-feedback-bridge/internal/storage"
 )
 
 func main() {

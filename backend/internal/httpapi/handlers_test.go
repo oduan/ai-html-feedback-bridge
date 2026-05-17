@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/oisin/ai-html-feedback-bridge/internal/storage"
+	"github.com/oduan/ai-html-feedback-bridge/internal/storage"
 	_ "modernc.org/sqlite"
 )
 

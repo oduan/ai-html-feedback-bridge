@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/oisin/ai-html-feedback-bridge/internal/storage"
+	"github.com/oduan/ai-html-feedback-bridge/internal/storage"
 )
 
 // maxContentSize is the maximum allowed request body size in bytes.

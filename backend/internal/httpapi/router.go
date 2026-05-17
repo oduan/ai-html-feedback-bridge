@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/oisin/ai-html-feedback-bridge/internal/storage"
+	"github.com/oduan/ai-html-feedback-bridge/internal/storage"
 )
 
 var validInteractionID = regexp.MustCompile(`^[a-zA-Z0-9_.\-]{1,128}$`)
