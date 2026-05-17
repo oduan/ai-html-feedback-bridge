@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -19,8 +20,9 @@ func TestDefaults(t *testing.T) {
 	if cfg.PORT != "8080" {
 		t.Errorf("expected PORT 8080, got %q", cfg.PORT)
 	}
-	if cfg.SQLitePath != "./data/app.db" {
-		t.Errorf("expected SQLITE_PATH ./data/app.db, got %q", cfg.SQLitePath)
+	expectedPath := expectedDefaultPath(t)
+	if cfg.SQLitePath != expectedPath {
+		t.Errorf("expected SQLITE_PATH %q, got %q", expectedPath, cfg.SQLitePath)
 	}
 	if cfg.MaxContentSize != 1048576 {
 		t.Errorf("expected MAX_CONTENT_SIZE 1048576, got %d", cfg.MaxContentSize)
@@ -97,10 +99,22 @@ func TestPartialOverride(t *testing.T) {
 	if cfg.PORT != "3000" {
 		t.Errorf("expected PORT 3000, got %q", cfg.PORT)
 	}
-	if cfg.SQLitePath != "./data/app.db" {
-		t.Errorf("expected default SQLITE_PATH ./data/app.db, got %q", cfg.SQLitePath)
+	expectedPath := expectedDefaultPath(t)
+	if cfg.SQLitePath != expectedPath {
+		t.Errorf("expected default SQLITE_PATH %q, got %q", expectedPath, cfg.SQLitePath)
 	}
 	if cfg.MaxContentSize != 1048576 {
 		t.Errorf("expected default MAX_CONTENT_SIZE 1048576, got %d", cfg.MaxContentSize)
 	}
+}
+
+// expectedDefaultPath replicates defaultSQLitePath logic for test assertions.
+func expectedDefaultPath(t *testing.T) string {
+	t.Helper()
+	exe, err := os.Executable()
+	if err != nil {
+		t.Fatalf("os.Executable() failed: %v", err)
+	}
+	dir := filepath.Dir(exe)
+	return filepath.Join(dir, "data", "app.db")
 }
